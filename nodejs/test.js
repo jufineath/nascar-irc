@@ -311,7 +311,8 @@ function update_leaderboard() {
   leaderboard_speed_best.sort(makeNumericCmpRev('BestSpeed'));
  
   // Commenting this out as it is probably not needed
-  //   Normal GC should wipe this. Will remove this comment and code at later data
+  // Normal GC should wipe this. Will remove this comment and code at later date
+  // 
   // TODO: See comment
   // delete fs; delete err; delete data;
 
