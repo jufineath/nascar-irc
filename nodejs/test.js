@@ -1,64 +1,89 @@
+var domain, botd, bot, cf;
 
-var domain, botd, bot, cfg, leaderboard_data=[];
-var leaderboard_running=[], leaderboard_points=[], leaderboard_luckydog=[],
-    leaderboard_speed_last=[],leaderboard_speed_best=[];
+// leaderboard_data holds the parsed JSON from NASCAR's leaderboard
+var leaderboard_data=[], leaderboard_running=[], leaderboard_points=[],
+    leaderboard_luckydog=[], leaderboard_speed_last=[],leaderboard_speed_best=[];
+
+// One global filesystem object to avoid memory leaking of creating this every update
 var fs=require('fs');
 
+// Error handling domain for the botd runner
 domain = require('domain');
 botd = domain.create();
 
-process.on('SIGHUP', function () {
-  console.log('Got SIGHUP, re-reading config');
-  cfg = JSON.parse(fs.readFileSync('./config.json'));
-});
-
-
+// Start the botd runner
 botd.run(function(){
   var Client, debug;
   Client = require('irc').Client;
   debug = require('debug')('bot');
+  
+  // require() in our config the first time, SIGHUP will force re-read also
   cfg = require('./config');
-  bot = new Client(cfg.server, cfg.nick, cfg.irc);
-  // setTimeout((function() {bot.say('#bottestlab', "your mom"); }), 30000);
-  setInterval(update_leaderboard, cfg.nascar.query_interval);
-  //setTimeout(test_chat, cfg.nascar.query_interval+3000);
-  // setTimeout(setup_listeners, 30000); 
+  
+  
+  // Let's get ready to listen for IRC events
   setup_listeners();
-  // botd.addListener('message#bottestlab', parse_message);
+
+  // And fire up our IRC bot (note, this is non-blocking, so it will continue on
+  //   before it is actually connected to servers and joined to channels
+  bot = new Client(cfg.server, cfg.nick, cfg.irc);
+  
+  // Let's starting regularly reading the leaderboard data
+  setInterval(update_leaderboard, cfg.nascar.query_interval);
+
   });
+// Generic error handler for this domain, post in channel and console.
 botd.on('error', function(err){
   bot.say('#bottestlab', "Error: " + err);
+  console.log("Error: " + err);
 });
 
 
+// To listen to appropriate events
 function setup_listeners() {
  
+  // When we are connected and registered on the server
   bot.addListener('registered', function (message) {
     console.log('Connected to server');});
   
+  // When *any* user joins a channel, including us
   bot.addListener('join',  function(channel, nick, message) {
     handle_join(channel, nick, message);});
 
+  // When any channel message or user privmsg comes in
   bot.addListener('message', parse_message);
 }
 
+
+// Respond to a channel join event (from any user)
 function handle_join(channel, nick, message) {
   console.log('Handling join...');
   
+  // If we are the one that joined, then let's let everyone know we're here
   if(nick === bot.nick) {
     bot.say(channel, 'Hello, i am ready. PrivMsg HELP for list of commands.');
   }
 }
 
+
+// Handle any channel or user privmsg
 function parse_message(from, to, message) {
   console.log(from + ' => ' + to + ':' + message) 
   
+  // If the message starts with ! then it may be a command, pay attention
   if(message[0] === '!') {
+    // If the to is our nick, then this is a privmsg,
+    //   let's make to=from so we can msg back to the user with the same code
+    //   that messages back to the channel
     if(to === bot.nick) {to = from;}
+    
+    //Now we are ready to parse for a command
     parse_command(from, to, message)
   }
 }
 
+
+// Command switcher
 function parse_command(from, to, message) {
   if(leaderboard_data.length <= 0) {
     bot.say(to, 'No leaderboard data available.');
@@ -267,3 +292,12 @@ function update_leaderboard() {
   console.log('update_leaderboard end');
 }
 
+
+
+
+// Capture SIGHUP and re-read the config
+// Right now this will really only work for URL changes
+process.on('SIGHUP', function () {
+  console.log('Got SIGHUP, re-reading config');
+  cfg = JSON.parse(fs.readFileSync('./config.json'));
+});
