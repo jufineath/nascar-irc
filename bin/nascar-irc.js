@@ -24,6 +24,9 @@ var domain, botd, bot, cf;
 var leaderboard_data=[], leaderboard_running=[], leaderboard_points=[],
     leaderboard_luckydog=[], leaderboard_speed_last=[],leaderboard_speed_best=[];
 
+// object to hold the strings the bot will use to reply to commands
+var responses = {}
+
 // One global filesystem object to avoid memory leaking of creating this every update
 var fs=require('fs');
 
@@ -50,14 +53,14 @@ botd.run(function(){
   setup_listeners();
   
   // Let's starting regularly reading the leaderboard data
-  setInterval(update_leaderboard, cfg.nascar.query_interval);
+  setInterval(function() {update_leaderboard(); update_responses();}, cfg.nascar.query_interval);
 
   });
 // Generic error handler for this domain, post in channel and console.
 botd.on('error', function(err){
   bot.say('#bottestlab', "Error: " + err);
   console.log("Error: " + err);
-  // throw err;
+   throw err;
 });
 
 
@@ -83,7 +86,7 @@ function handle_join(channel, nick, message) {
   
   // If we are the one that joined, then let's let everyone know we're here
   if(nick === bot.nick) {
-    bot.say(channel, 'Hello, i am ready. PrivMsg HELP for list of commands.');
+    bot.say(channel, 'Hello, i am ready. PrivMsg HELP for list of commands. (not actually implemented yet - LOL'); //TODO: HELP?
   }
 }
 
@@ -109,118 +112,42 @@ function parse_message(from, to, message) {
 var command_handlers = {
 
   running: function(from,to,message) {
-      var order = '', sep='';
-      console.log('Passings: ' + leaderboard_running.length);
-      for(var i = 0;i < leaderboard_running.length;i++) {
-          //console.log('P' + i + ' : ' + leaderboard_data.Passings[i].CarNo);
-          order = order + sep + leaderboard_data.Passings[leaderboard_running[i].index].CarNo;
-          sep = ', ';
-      }
-      bot.say(to, 'Currently running ' + lapticker() + ': ' + order);
-      console.log(to, 'Currently running ' + lapticker() + ': ' + order);
+    say_and_log(to,responses.running)
   },
-
 
   leader: function(from,to,message) {  
-    bot.say(to, leaderboard_data.Passings[leaderboard_running[0].index].Driver.DriverName + ' is leading the race. ' + lapticker() + '')
-    console.log(to, leaderboard_data.Passings[leaderboard_running[0].index].Driver.DriverName + ' is leading the race. ' + lapticker() + '')
+	var driver = leaderboard_data.Passings[leaderboard_running[0].index].Driver.DriverName
+    var output = driver + ' is leading the race. ' + lapticker()
+    say_and_log(to, output) 
   },
   
-  
   luckydog: function(from,to,message) {  
-    bot.say(to, leaderboard_data.Passings[leaderboard_luckydog].Driver.DriverName + ' is sitting in lucky dog position. ' + lapticker() + '')
-    console.log(to, leaderboard_data.Passings[leaderboard_luckydog].Driver.DriverName + ' is sitting in lucky dog position. ' + lapticker() + '')
+	var driver = leaderboard_data.Passings[leaderboard_luckydog].Driver.DriverName
+	var output = driver + ' is sitting in lucky dog position. ' + lapticker()
+    say_and_log(to, output)
   },
     
   points: function(from,to,message) {
-    var order = '', sep='';
- 
-    //bot.say(to, leaderboard_data.Passings[leaderboard_points[0].index].Driver.DriverName + ' is overall points leader');
-    //console.log(to, leaderboard_data.Passings[leaderboard_points[0].index].Driver.DriverName + ' is overall points leader');
-    
-    var largest = 12;
-    if(leaderboard_points.length < 12) {largest=leaderboard_points.length;}
-    for(var i = 0;i < largest;i++) {
-      //Append the seperator and the driver name..
-      order = order + sep + leaderboard_data.Passings[leaderboard_points[i].index].LastName;
-      if(i==0) {
-	    //If this is the first driver, then show their total points
-	    order=order + ' ' + leaderboard_data.Passings[leaderboard_points[i].index].Points;
-      }
-      else {
-	    //If this is not the first driver, then show their point delta from leader
-        var delta = leaderboard_data.Passings[leaderboard_points[i].index].DeltaLeader
-        if(delta>0) {delta = 0-delta;}
-        order=order + ' ' + (delta);
-      } 
-
-      sep = ', ';
-    }
-    bot.say(to, 'Point Standings ' + lapticker() + ': ' + order);
-    console.log(to, 'Point Standings ' + lapticker() + ': ' + order);
+    say_and_log(to,responses.points)
   },
   
   fastlast: function(from,to,message) {
-    var order = '', sep='';
- 
-    //bot.say(to, leaderboard_data.Passings[leaderboard_points[0].index].Driver.DriverName + ' is overall points leader');
-    //console.log(to, leaderboard_data.Passings[leaderboard_points[0].index].Driver.DriverName + ' is overall points leader');
-    
-    var largest = 12;
-    if(leaderboard_speed_last.length < 12) {largest=leaderboard_speed_last.length;}
-    for(var i = 0;i < largest;i++) {
-      //console.log('P' + i + ' : ' + leaderboard_data.Passings[i].CarNo);
-      order = order + sep + leaderboard_data.Passings[leaderboard_speed_last[i].index].LastName +
-           ' ' + (leaderboard_data.Passings[leaderboard_speed_last[i].index].LastLapSpeed) + 'mph';
-      sep = ', ';
-    }
-    bot.say(to, 'Fastest ' + lapticker() + ': ' + order);
-    console.log(to, 'Fastest' + lapticker() + ': ' + order);
+    say_and_log(to, responses.fastest_last)
   },
 
   fastbest: function(from,to,message) {
-    var order = '', sep='';
- 
-    //bot.say(to, leaderboard_data.Passings[leaderboard_points[0].index].Driver.DriverName + ' is overall points leader');
-    //console.log(to, leaderboard_data.Passings[leaderboard_points[0].index].Driver.DriverName + ' is overall points leader');
-    
-    var largest = 12;
-    if(leaderboard_speed_best.length < 12) {largest=leaderboard_speed_best.length;}
-    for(var i = 0;i < largest;i++) {
-      //console.log('P' + i + ' : ' + leaderboard_data.Passings[i].CarNo);
-      order = order + sep + leaderboard_data.Passings[leaderboard_speed_best[i].index].LastName +
-           ' ' + (leaderboard_data.Passings[leaderboard_speed_best[i].index].BestSpeed) + 'mph';
-      sep = ', ';
-    }
-    bot.say(to, 'Fastest Today ' + lapticker() + ': ' + order);
-    console.log(to, 'Fastest Today' + lapticker() + ': ' + order);
+    say_and_log(to, responses.fastest_best)
   },
-  
+
   top10: function(from,to,message) {
-    var order = '', sep='';
- 
-    //bot.say(to, leaderboard_data.Passings[leaderboard_running[0].index].Driver.DriverName + ' is leading the race.');
-    //console.log(to, leaderboard_data.Passings[leaderboard_running[0].index].Driver.DriverName + ' is leading the race.');
-    
-    var largest = 10;
-    if(leaderboard_running.length < 10) {largest=leaderboard_running.length;}
-    for(var i = 0;i < largest;i++) {
-      //console.log('P' + i + ' : ' + leaderboard_data.Passings[i].CarNo);
-      order = order + sep + leaderboard_data.Passings[leaderboard_running[i].index].LastName;
-      if(i>0) {
-        var delta = leaderboard_data.Passings[leaderboard_running[i].index].SFDelta
-        if(delta>0) {delta = 0-delta;}
-        order=order + ' ' + (delta);
-      }
-      sep = ', ';
-    }
-    bot.say(to, 'Top10 ' + lapticker() + ': ' + order);
-    console.log(to, 'Top10 ' + lapticker() + ': ' + order);
+    say_and_log(to, responses.top10)
+  }
+
+  topten: function(from,to,message) {
+    say_and_log(to, responses.top10)
   }
 
 } // End command_handlers
-
-
 
 
 function parse_command(from, to, message) {
@@ -246,6 +173,114 @@ function parse_command(from, to, message) {
 }
 
 
+function say_and_log(to, message) {
+  bot.say(to, message);
+  console.log(to, message);
+}
+
+
+//This is bot-code, not NASCAR API code, that will update the bot's
+//  response strings. (most of our responses can be pre-fabbed)
+// this makes responding faster as it's all pre-calculated
+function update_responses() {
+  var order = '', sep='', largest = 10;
+
+
+  // First we will note the running order
+  console.log('Passings: ' + leaderboard_running.length);
+  for(var i = 0;i < leaderboard_running.length;i++) {
+    //console.log('P' + i + ' : ' + leaderboard_data.Passings[i].CarNo);
+    order = order + sep + leaderboard_data.Passings[leaderboard_running[i].index].CarNo;
+    sep = ', ';
+  }
+  responses.running = 'Currently running ' + lapticker() + ': ' + order;
+  console.log('Currently running ' + lapticker() + ': ' + order);
+
+
+  //Next we will note the top 12 by points
+  order = ''; sep='';
+  largest = 12;
+  if(leaderboard_points.length < largest) {largest=leaderboard_points.length;}
+  for(var i = 0;i < largest;i++) {
+    order = order + sep + leaderboard_data.Passings[leaderboard_points[i].index].LastName;
+    if(i==0) {
+      //If this is the first driver, then show their total points
+      order=order + ' ' + leaderboard_data.Passings[leaderboard_points[i].index].Points;
+    }
+    else {
+      //If this is not the first driver, then show their point delta from leader
+      var delta = leaderboard_data.Passings[leaderboard_points[i].index].DeltaLeader
+      if(delta>0) {delta = 0-delta;}
+      order=order + ' ' + (delta);
+    }
+    sep = ', ';
+  }
+  responses.points = 'Point Standings ' + lapticker() + ': ' + order;
+
+
+  // Next we will note the 12 fastest cars, based on their most recently completed lap
+  order = ''; sep='';
+  largest = 12;
+  if(leaderboard_speed_last.length < largest) {largest=leaderboard_speed_last.length;}
+  for(var i = 0;i < largest;i++) {
+    order = order + sep + leaderboard_data.Passings[leaderboard_speed_last[i].index].LastName +
+         ' ' + (leaderboard_data.Passings[leaderboard_speed_last[i].index].LastLapSpeed) + 'mph';
+    sep = ', ';
+  }
+  responses.fastest_last = 'Fastest ' + lapticker() + ': ' + order;
+
+
+  // Next we will note the 12 fastest cars, based on their fastest completed lap
+  order = ''; sep='';
+  largest = 12;
+  if(leaderboard_speed_best.length < largest) {largest=leaderboard_speed_best.length;}
+  for(var i = 0;i < largest;i++) {
+    order = order + sep + leaderboard_data.Passings[leaderboard_speed_best[i].index].LastName +
+          ' ' + (leaderboard_data.Passings[leaderboard_speed_best[i].index].BestSpeed) + 'mph';
+    sep = ', ';
+  }
+  responses.fastest_best = 'Fastest Today ' + lapticker() + ': ' + order;
+
+  // Next we will note the 10 lead cars
+  // P2-P10 will show delta behind leader
+  order = ''; sep='';
+  largest = 10;
+  if(leaderboard_running.length < largest) {largest=leaderboard_running.length;}
+  for(var i = 0;i < largest;i++) {
+    order = order + sep + leaderboard_data.Passings[leaderboard_running[i].index].LastName;
+    if(i>0) {
+      var delta = leaderboard_data.Passings[leaderboard_running[i].index].SFDelta
+      if(delta>0) {delta = 0-delta;}
+      order=order + ' ' + (delta);
+    }
+    sep = ', ';
+  }
+  responses.top10 = 'Top10 ' + lapticker() + ': ' + order;
+}
+
+
+
+// TODO: This is a unit test, should be fixed or removed
+function test_chat() {
+  parse_command('jufineath', 'jufineath', '!leader')
+  parse_command('jufineath', 'jufineath', '!running')
+  parse_command('jufineath', 'jufineath', '!points');
+  parse_command('jufineath', 'jufineath', '!running')
+  parse_command('jufineath', 'jufineath', '!leader')
+}
+
+
+
+
+// Capture SIGHUP and re-read the config
+// Right now this will really only work for URL changes
+process.on('SIGHUP', function () {
+  console.log('Got SIGHUP, re-reading config');
+  cfg = JSON.parse(fs.readFileSync('../config/config.json'));
+});
+
+
+
 
 
 // These are comparators for our leaderboard indexes
@@ -259,16 +294,6 @@ function makeNumericCmpRev(property) {
     return function (a, b) {
         return parseInt(b[property]) - parseInt(a[property]);
     };
-}
-
-
-// TODO: This is a unit test, should be fixed or removed
-function test_chat() {
-  parse_command('jufineath', 'jufineath', '!leader')
-  parse_command('jufineath', 'jufineath', '!running')
-  parse_command('jufineath', 'jufineath', '!points');
-  parse_command('jufineath', 'jufineath', '!running')
-  parse_command('jufineath', 'jufineath', '!leader')
 }
 
 
@@ -354,6 +379,11 @@ function update_leaderboard() {
     leaderboard_speed_best.sort(makeNumericCmpRev('BestSpeed'));
     // Print data for testing by uncommenting below
     // console.dir(data);
+
+    // TODO: When this is extracted to nascar-lib there should be a property
+    //  to allow you to define a callback after each leaderboard refresh
+    //  or an 'event', as it were
+    //callback();
   });
 
   
@@ -382,11 +412,3 @@ function lapticker() {
   return ticker;                      
 }
 
-
-
-// Capture SIGHUP and re-read the config
-// Right now this will really only work for URL changes
-process.on('SIGHUP', function () {
-  console.log('Got SIGHUP, re-reading config');
-  cfg = JSON.parse(fs.readFileSync('../config/config.json'));
-});
