@@ -123,7 +123,7 @@ var command_handlers = {
   
   luckydog: function(from,to,message) {  
 	var driver = leaderboard_data.Passings[leaderboard_luckydog].Driver.DriverName
-	var output = driver + ' is sitting in lucky dog position. ' + lapticker()
+	var output = driver + ' is sitting in the lucky dog position. ' + lapticker()
     say_and_log(to, output)
   },
     
