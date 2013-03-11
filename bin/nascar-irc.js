@@ -34,6 +34,9 @@ var fs=require('fs');
 domain = require('domain');
 botd = domain.create();
 
+//Our help message
+var help_message = 'Looking for help? Try these commands: !leader, !running, !top10, !luckydog, !p Johnson, !fastlast, !fastbest, !points';
+
 // Start the botd runner
 botd.run(function(){
   var Client, debug;
@@ -87,7 +90,7 @@ function handle_join(channel, nick, message) {
   
   // If we are the one that joined, then let's let everyone know we're here
   if(nick === bot.nick) {
-    bot.say(channel, 'Hello, i am ready. PrivMsg HELP for list of commands. (not actually implemented yet - LOL'); //TODO: HELP?
+    bot.say(channel, 'Hello, i am ready. PrivMsg HELP for list of commands.');
   }
 }
 
@@ -106,20 +109,31 @@ function parse_message(from, to, message) {
     //Now we are ready to parse for a command
     parse_command(from, to, message)
   }
+
+  // If the message was not a command, let's see if it was private message
+  //   and if it was a private message, does it seem like they want help?
+  // TODO: Make this a more informative help screen
+  if(to == bot.nick && message.toLowerCase().indexOf('help') != -1) {
+	  say_and_log(from, help_message)
+  }
 }
 
 
 // Command switcher
 var command_handlers = {
 
+  help: function(from,to,message) {
+	say_and_log(from, help_message);
+  },
+
   running: function(from,to,message) {
-    say_and_log(to,responses.running)
+    say_and_log(to,responses.running);
   },
 
   leader: function(from,to,message) {  
-	var driver = leaderboard_data.Passings[leaderboard_running[0].index].Driver.DriverName
-    var output = driver + ' is leading the race. ' + lapticker()
-    say_and_log(to, output) 
+	var driver = leaderboard_data.Passings[leaderboard_running[0].index].Driver.DriverName;
+    var output = driver + ' is leading the race. ' + lapticker();
+    say_and_log(to, output) ;
   },
   
   luckydog: function(from,to,message) {  
@@ -184,8 +198,7 @@ function parse_command(from, to, message) {
   if(!"length" in leaderboard_data){ console.log("Die, no leadboard."); return;}
   
   if(leaderboard_data.length <= 0) {
-    bot.say(to, 'No leaderboard data available.');
-    console.log(to, 'No leaderboard data available.');
+    say_and_log(to, 'No leaderboard data available.');
     return;
   }
     
@@ -200,6 +213,7 @@ function parse_command(from, to, message) {
     console.log('bad command: ' + message);
     throw err;
   }
+
 
 }
 
