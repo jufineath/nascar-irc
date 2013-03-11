@@ -58,9 +58,10 @@ botd.run(function(){
   });
 // Generic error handler for this domain, post in channel and console.
 botd.on('error', function(err){
-  bot.say('#bottestlab', "Error: " + err);
+  // TODO: We can't say in a hardcoded channel, get ye to a config
+  // bot.say('#bottestlab', "Error: " + err);
   console.log("Error: " + err);
-   throw err;
+  // throw err;
 });
 
 
@@ -145,6 +146,35 @@ var command_handlers = {
 
   topten: function(from,to,message) {
     say_and_log(to, responses.top10);
+  },
+
+  p: function(from,to,message) {
+    var target = message.substring(1, message.length).split(' ')[1];
+    for(var i =0;i<leaderboard_data.Passings.length;i++){
+	  if(leaderboard_data.Passings[i].Driver.DriverName.toLowerCase().indexOf(target.toLowerCase()) !== -1) {
+		var leader_delta = leaderboard_data.Passings[i].SFDelta, delta_message = '';
+		if(leaderboard_data.Passings[i].SFDelta == 0) {
+		  delta_message = 'in the lead';
+		}
+		else if(leader_delta > 0) {
+		  delta_message = leader_delta + " sec behind leader"
+		}
+		else {
+		  delta_message = (0 - leader_delta) + ' laps down'
+		}
+		var output = leaderboard_data.Passings[i].FirstName +
+		             ' ' + leaderboard_data.Passings[i].LastName +
+		             ' (' + leaderboard_data.Passings[i].CarNo + ') is running p' +
+		             leaderboard_data.Passings[i].RaceRank + ' at ' +
+		             leaderboard_data.Passings[i].LastLapSpeed + 'mph (' +
+		             leaderboard_data.Passings[i].LastLapTime + 'sec) in the ' +
+		             leaderboard_data.Passings[i].Sponsor + ' car. Currently ' +
+		             delta_message + '. ' + lapticker()
+		//var output = ''
+	    say_and_log(to, output)	
+	  }
+    }
+    //say_and_log(to, responses.top10);
   }
 
 } // End command_handlers
@@ -168,6 +198,7 @@ function parse_command(from, to, message) {
   }
   catch (err) {
     console.log('bad command: ' + message);
+    throw err;
   }
 
 }
@@ -194,8 +225,7 @@ function update_responses() {
     sep = ', ';
   }
   responses.running = 'Currently running ' + lapticker() + ': ' + order;
-  console.log('Currently running ' + lapticker() + ': ' + order);
-
+ 
 
   //Next we will note the top 12 by points
   order = ''; sep='';
