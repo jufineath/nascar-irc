@@ -1,0 +1,17 @@
+{ "server": "irc.no.net"
+, "nick": "nascar-bot"
+, "chan": "#nascar"
+, "irc": { "userName": "nascar-bot"
+         , "realName": "nascar stats bot"
+         , "debug": true
+         , "floodProtection": true
+         , "floodProtectionDelay": 500
+         , "channels": [ "#nascar"
+                       ]
+         }
+, "nascar": {  "leaderboard_url": "http://www.nascar.com/"
+             , "labbylap_url": "http://www.nascar.com/"
+             , "query_interval": 15000
+             }
+}
+
