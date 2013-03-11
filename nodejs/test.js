@@ -227,39 +227,63 @@ function test_chat() {
   parse_command('jufineath', 'jufineath', '!leader')
 }
 
+
+
+// This method parses the leaderboard JSON, and creates some indexes for us
 function update_leaderboard() {
   console.log('update_leaderboard begin');
   var data, err;
+  
+  // We are currently just reading this from a file because races aren't actually life
+  //   24/7 and i haven't yet put the files where i can http GET them. 
   fs.readFile(cfg.nascar.leaderboard_url, 'utf8', function (err, data) {
     if (err) {
       console.log('Error: ' + err);
       return;
     }
 
+    // Store the JSON in the leaderboard_data array
     leaderboard_data = JSON.parse(data);
+    
+    // Print data for testing by uncommenting below
     // console.dir(data);
   });
 
+  // Re-initialize the leaderboard_points index
   leaderboard_points = []
+  // Loop through leaderboard_data.Passings and note the car number, points,
+  //   points position and leaderbaord_data.Passings index
   for(var i=0;i<leaderboard_data.Passings.length;i++) {
-    //console.log('adding ' + leaderboard_data.Passings[i].CarNo + ' : ' + leaderboard_data.Passings[i].Points);
     leaderboard_points[i] = {'CarNo' : leaderboard_data.Passings[i].CarNo,
                              'Points' : leaderboard_data.Passings[i].Points,
                              'PointsPosition' : leaderboard_data.Passings[i].PointsPosition,
                              'index' : i};
   }
+  // Sort the _points array by the PointsPosition property in order of
+  //   1, 2, 3, ..., N
   leaderboard_points.sort(makeNumericCmp('PointsPosition'));
   
   
 
+  // Re-initialize the leaderboard_running index
   leaderboard_running = []
+  // Loop through leaderboard_data.Passings and note the car number, race rank/position,
+  //  and leaderbaord_data.Passings index
   for(var i=0;i<leaderboard_data.Passings.length;i++) {
-    //console.log('adding ' + leaderboard_data.Passings[i].CarNo + ' : ' + leaderboard_data.Passings[i].Points);
-    leaderboard_running[i] = {'CarNo' : leaderboard_data.Passings[i].CarNo, 'RaceRank' : leaderboard_data.Passings[i].RaceRank, 'index' : i};
+    leaderboard_running[i] = {'CarNo' : leaderboard_data.Passings[i].CarNo,
+                              'RaceRank' : leaderboard_data.Passings[i].RaceRank,
+                              'index' : i};
   }
+  // Sort the _running array by the RaceRank (running order) property in order of
+  //   1, 2, 3, ..., N
   leaderboard_running.sort(makeNumericCmp('RaceRank'));
-   //console.dir(leaderboard_points);
+   
 
+  // Loop through the array of cars and note the first one with an SFDelta = -1
+  //   this is the first car NOT on the lead lap, and will be the car eligible
+  //   for the Lucky Dog Pass
+  // TODO: This should leverage the sorted _running array, not just assume that
+  //         Passings is in running order  
   for(var i=0;i<leaderboard_running.length;i++) {
     if(leaderboard_data.Passings[i].SFDelta == -1) {
       leaderboard_luckydog = i;
@@ -269,26 +293,28 @@ function update_leaderboard() {
   
   
   
-
+  // Capturing each car's speed as of their last completed lap
+  //   putting it in _speed_last index, ordered by fastest
   leaderboard_speed_last = []
   for(var i=0;i<leaderboard_data.Passings.length;i++) {
-    //console.log('adding ' + leaderboard_data.Passings[i].CarNo + ' : ' + leaderboard_data.Passings[i].Points);
     leaderboard_speed_last[i] = {'CarNo' : leaderboard_data.Passings[i].CarNo, 'LastLapSpeed' : leaderboard_data.Passings[i].LastLapSpeed, 'index' : i};
   }
   leaderboard_speed_last.sort(makeNumericCmpRev('LastLapSpeed'));
   
+  
+  // Capturing each car's speed as of their BEST completed lap
+  //   putting it in _speed_best index, ordered by fastest
   leaderboard_speed_best = []
   for(var i=0;i<leaderboard_data.Passings.length;i++) {
-    //console.log('adding ' + leaderboard_data.Passings[i].CarNo + ' : ' + leaderboard_data.Passings[i].Points);
     leaderboard_speed_best[i] = {'CarNo' : leaderboard_data.Passings[i].CarNo, 'BestSpeed' : leaderboard_data.Passings[i].BestSpeed, 'index' : i};
   }
   leaderboard_speed_best.sort(makeNumericCmpRev('BestSpeed'));
-   //console.dir(leaderboard_points);
+ 
+  // Commenting this out as it is probably not needed
+  //   Normal GC should wipe this. Will remove this comment and code at later data
+  // TODO: See comment
+  // delete fs; delete err; delete data;
 
-
-  delete fs; delete err; delete data;
-
-  // setTimeout(this.update_leaderboard, 5000);
   console.log('update_leaderboard end');
 }
 
