@@ -140,11 +140,11 @@ var command_handlers = {
   },
 
   top10: function(from,to,message) {
-    say_and_log(to, responses.top10)
-  }
+    say_and_log(to, responses.top10);
+  },
 
   topten: function(from,to,message) {
-    say_and_log(to, responses.top10)
+    say_and_log(to, responses.top10);
   }
 
 } // End command_handlers
