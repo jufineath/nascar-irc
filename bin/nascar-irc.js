@@ -18,7 +18,7 @@ botd.run(function(){
   debug = require('debug')('bot');
   
   // require() in our config the first time, SIGHUP will force re-read also
-  cfg = require('./config');
+  cfg = require('../config/config');
   
 
   // And fire up our IRC bot (note, this is non-blocking, so it will continue on
@@ -368,5 +368,5 @@ function lapticker() {
 // Right now this will really only work for URL changes
 process.on('SIGHUP', function () {
   console.log('Got SIGHUP, re-reading config');
-  cfg = JSON.parse(fs.readFileSync('./config.json'));
+  cfg = JSON.parse(fs.readFileSync('../config/config.json'));
 });
