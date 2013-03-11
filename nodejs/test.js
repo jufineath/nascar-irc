@@ -88,17 +88,17 @@ function parse_message(from, to, message) {
 // Command switcher
 var command_handlers = {
 
-	running: function(from,to,message) {
-		var order = '', sep='';
-		console.log('Passings: ' + leaderboard_running.length);
-		for(var i = 0;i < leaderboard_running.length;i++) {
-			//console.log('P' + i + ' : ' + leaderboard_data.Passings[i].CarNo);
-			order = order + sep + leaderboard_data.Passings[leaderboard_running[i].index].CarNo;
-			sep = ', ';
-		}
-		bot.say(to, 'Currently running ' + lapticker() + ': ' + order);
-		console.log(to, 'Currently running ' + lapticker() + ': ' + order);
-	},
+  running: function(from,to,message) {
+      var order = '', sep='';
+      console.log('Passings: ' + leaderboard_running.length);
+      for(var i = 0;i < leaderboard_running.length;i++) {
+          //console.log('P' + i + ' : ' + leaderboard_data.Passings[i].CarNo);
+          order = order + sep + leaderboard_data.Passings[leaderboard_running[i].index].CarNo;
+          sep = ', ';
+      }
+      bot.say(to, 'Currently running ' + lapticker() + ': ' + order);
+      console.log(to, 'Currently running ' + lapticker() + ': ' + order);
+  },
 
 
   leader: function(from,to,message) {  
@@ -121,14 +121,19 @@ var command_handlers = {
     var largest = 12;
     if(leaderboard_points.length < 12) {largest=leaderboard_points.length;}
     for(var i = 0;i < largest;i++) {
-      //console.log('P' + i + ' : ' + leaderboard_data.Passings[i].CarNo);
+      //Append the seperator and the driver name..
       order = order + sep + leaderboard_data.Passings[leaderboard_points[i].index].LastName;
-      if(i>0) {
+      if(i==0) {
+	    //If this is the first driver, then show their total points
+	    order=order + ' ' + leaderboard_data.Passings[leaderboard_points[i].index].Points;
+      }
+      else {
+	    //If this is not the first driver, then show their point delta from leader
         var delta = leaderboard_data.Passings[leaderboard_points[i].index].DeltaLeader
         if(delta>0) {delta = 0-delta;}
         order=order + ' ' + (delta);
-      } //+
-          //          ' :' + (leaderboard_data.Passings[leaderboard_points[i].index].DeltaLeader);
+      } 
+
       sep = ', ';
     }
     bot.say(to, 'Point Standings ' + lapticker() + ': ' + order);
@@ -262,75 +267,71 @@ function update_leaderboard() {
     }
 
     // Store the JSON in the leaderboard_data array
-    console.log('update_leaderboard - parsing json');
     leaderboard_data = JSON.parse(data);
-    console.log('update_leaderboard - json parsed');
     
     
-		if("length" in leaderboard_data) { console.log('update_leaderboard - bailing, no leaderboard'); return;}
-	
-		// Re-initialize the leaderboard_points index
-		leaderboard_points = []
-		// Loop through leaderboard_data.Passings and note the car number, points,
-		//   points position and leaderbaord_data.Passings index
-		console.log('update_leaderboard - start building _points index');
-		for(var i=0;i<leaderboard_data.Passings.length;i++) {
-			leaderboard_points[i] = {'CarNo' : leaderboard_data.Passings[i].CarNo,
-															 'Points' : leaderboard_data.Passings[i].Points,
-															 'PointsPosition' : leaderboard_data.Passings[i].PointsPosition,
-															 'index' : i};
-		}
-		// Sort the _points array by the PointsPosition property in order of
-		//   1, 2, 3, ..., N
-		leaderboard_points.sort(makeNumericCmp('PointsPosition'));
-		console.log('update_leaderboard - done building _points index');
-	
-	
+    if("length" in leaderboard_data) { console.log('update_leaderboard - bailing, no leaderboard'); return;}
 
-		// Re-initialize the leaderboard_running index
-		leaderboard_running = []
-		// Loop through leaderboard_data.Passings and note the car number, race rank/position,
-		//  and leaderbaord_data.Passings index
-		for(var i=0;i<leaderboard_data.Passings.length;i++) {
-			leaderboard_running[i] = {'CarNo' : leaderboard_data.Passings[i].CarNo,
-																'RaceRank' : leaderboard_data.Passings[i].RaceRank,
-																'index' : i};
-		}
-		// Sort the _running array by the RaceRank (running order) property in order of
-		//   1, 2, 3, ..., N
-		leaderboard_running.sort(makeNumericCmp('RaceRank'));
-	 
+    // Re-initialize the leaderboard_points index
+    leaderboard_points = []
+    // Loop through leaderboard_data.Passings and note the car number, points,
+    //   points position and leaderbaord_data.Passings index
+    for(var i=0;i<leaderboard_data.Passings.length;i++) {
+      leaderboard_points[i] = {'CarNo' : leaderboard_data.Passings[i].CarNo,
+                               'Points' : leaderboard_data.Passings[i].Points,
+                               'PointsPosition' : leaderboard_data.Passings[i].PointsPosition,
+                               'index' : i};
+    }
+    // Sort the _points array by the PointsPosition property in order of
+    //   1, 2, 3, ..., N
+    leaderboard_points.sort(makeNumericCmp('PointsPosition'));
 
-		// Loop through the array of cars and note the first one with an SFDelta = -1
-		//   this is the first car NOT on the lead lap, and will be the car eligible
-		//   for the Lucky Dog Pass
-		// TODO: This should leverage the sorted _running array, not just assume that
-		//         Passings is in running order  
-		for(var i=0;i<leaderboard_running.length;i++) {
-			if(leaderboard_data.Passings[i].SFDelta == -1) {
-				leaderboard_luckydog = i;
-				break;
-			}
-		}
-	
-	
-	
-		// Capturing each car's speed as of their last completed lap
-		//   putting it in _speed_last index, ordered by fastest
-		leaderboard_speed_last = []
-		for(var i=0;i<leaderboard_data.Passings.length;i++) {
-			leaderboard_speed_last[i] = {'CarNo' : leaderboard_data.Passings[i].CarNo, 'LastLapSpeed' : leaderboard_data.Passings[i].LastLapSpeed, 'index' : i};
-		}
-		leaderboard_speed_last.sort(makeNumericCmpRev('LastLapSpeed'));
-	
-	
-		// Capturing each car's speed as of their BEST completed lap
-		//   putting it in _speed_best index, ordered by fastest
-		leaderboard_speed_best = []
-		for(var i=0;i<leaderboard_data.Passings.length;i++) {
-			leaderboard_speed_best[i] = {'CarNo' : leaderboard_data.Passings[i].CarNo, 'BestSpeed' : leaderboard_data.Passings[i].BestSpeed, 'index' : i};
-		}
-		leaderboard_speed_best.sort(makeNumericCmpRev('BestSpeed'));
+
+
+    // Re-initialize the leaderboard_running index
+    leaderboard_running = []
+    // Loop through leaderboard_data.Passings and note the car number, race rank/position,
+    //  and leaderbaord_data.Passings index
+    for(var i=0;i<leaderboard_data.Passings.length;i++) {
+      leaderboard_running[i] = {'CarNo' : leaderboard_data.Passings[i].CarNo,
+                                'RaceRank' : leaderboard_data.Passings[i].RaceRank,
+                                'index' : i};
+    }
+    // Sort the _running array by the RaceRank (running order) property in order of
+    //   1, 2, 3, ..., N
+    leaderboard_running.sort(makeNumericCmp('RaceRank'));
+ 
+
+    // Loop through the array of cars and note the first one with an SFDelta = -1
+    //   this is the first car NOT on the lead lap, and will be the car eligible
+    //   for the Lucky Dog Pass
+    // TODO: This should leverage the sorted _running array, not just assume that
+    //         Passings is in running order  
+    for(var i=0;i<leaderboard_running.length;i++) {
+      if(leaderboard_data.Passings[i].SFDelta == -1) {
+        leaderboard_luckydog = i;
+        break;
+      }
+    }
+
+
+
+    // Capturing each car's speed as of their last completed lap
+    //   putting it in _speed_last index, ordered by fastest
+    leaderboard_speed_last = []
+    for(var i=0;i<leaderboard_data.Passings.length;i++) {
+      leaderboard_speed_last[i] = {'CarNo' : leaderboard_data.Passings[i].CarNo, 'LastLapSpeed' : leaderboard_data.Passings[i].LastLapSpeed, 'index' : i};
+    }
+    leaderboard_speed_last.sort(makeNumericCmpRev('LastLapSpeed'));
+
+
+    // Capturing each car's speed as of their BEST completed lap
+    //   putting it in _speed_best index, ordered by fastest
+    leaderboard_speed_best = []
+    for(var i=0;i<leaderboard_data.Passings.length;i++) {
+      leaderboard_speed_best[i] = {'CarNo' : leaderboard_data.Passings[i].CarNo, 'BestSpeed' : leaderboard_data.Passings[i].BestSpeed, 'index' : i};
+    }
+    leaderboard_speed_best.sort(makeNumericCmpRev('BestSpeed'));
     // Print data for testing by uncommenting below
     // console.dir(data);
   });
