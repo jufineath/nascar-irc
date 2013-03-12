@@ -30,6 +30,10 @@ var responses = {}
 // One global filesystem object to avoid memory leaking of creating this every update
 var fs=require('fs');
 
+// One global request object
+var request = require('request');
+
+
 // Error handling domain for the botd runner
 domain = require('domain');
 botd = domain.create();
@@ -114,7 +118,7 @@ function parse_message(from, to, message) {
   //   and if it was a private message, does it seem like they want help?
   // TODO: Make this a more informative help screen
   if(to == bot.nick && message.toLowerCase().indexOf('help') != -1) {
-	  say_and_log(from, help_message)
+    say_and_log(from, help_message)
   }
 }
 
@@ -123,7 +127,7 @@ function parse_message(from, to, message) {
 var command_handlers = {
 
   help: function(from,to,message) {
-	say_and_log(from, help_message);
+  say_and_log(from, help_message);
   },
 
   running: function(from,to,message) {
@@ -131,14 +135,14 @@ var command_handlers = {
   },
 
   leader: function(from,to,message) {  
-	var driver = leaderboard_data.Passings[leaderboard_running[0].index].Driver.DriverName;
+  var driver = leaderboard_data.Passings[leaderboard_running[0].index].Driver.DriverName;
     var output = driver + ' is leading the race. ' + lapticker();
     say_and_log(to, output) ;
   },
   
   luckydog: function(from,to,message) {  
-	var driver = leaderboard_data.Passings[leaderboard_luckydog].Driver.DriverName
-	var output = driver + ' is sitting in the lucky dog position. ' + lapticker()
+  var driver = leaderboard_data.Passings[leaderboard_luckydog].Driver.DriverName
+  var output = driver + ' is sitting in the lucky dog position. ' + lapticker()
     say_and_log(to, output)
   },
     
@@ -165,28 +169,28 @@ var command_handlers = {
   p: function(from,to,message) {
     var target = message.substring(1, message.length).split(' ')[1];
     for(var i =0;i<leaderboard_data.Passings.length;i++){
-	  if(leaderboard_data.Passings[i].Driver.DriverName.toLowerCase().indexOf(target.toLowerCase()) !== -1) {
-		var leader_delta = leaderboard_data.Passings[i].SFDelta, delta_message = '';
-		if(leaderboard_data.Passings[i].SFDelta == 0) {
-		  delta_message = 'in the lead';
-		}
-		else if(leader_delta > 0) {
-		  delta_message = leader_delta + " sec behind leader"
-		}
-		else {
-		  delta_message = (0 - leader_delta) + ' laps down'
-		}
-		var output = leaderboard_data.Passings[i].FirstName +
-		             ' ' + leaderboard_data.Passings[i].LastName +
-		             ' (' + leaderboard_data.Passings[i].CarNo + ') is running p' +
-		             leaderboard_data.Passings[i].RaceRank + ' at ' +
-		             leaderboard_data.Passings[i].LastLapSpeed + 'mph (' +
-		             leaderboard_data.Passings[i].LastLapTime + 'sec) in the ' +
-		             leaderboard_data.Passings[i].Sponsor + ' car. Currently ' +
-		             delta_message + '. ' + lapticker()
-		//var output = ''
-	    say_and_log(to, output)	
-	  }
+    if(leaderboard_data.Passings[i].Driver.DriverName.toLowerCase().indexOf(target.toLowerCase()) !== -1) {
+    var leader_delta = leaderboard_data.Passings[i].SFDelta, delta_message = '';
+    if(leaderboard_data.Passings[i].SFDelta == 0) {
+      delta_message = 'in the lead';
+    }
+    else if(leader_delta > 0) {
+      delta_message = leader_delta + " sec behind leader"
+    }
+    else {
+      delta_message = (0 - leader_delta) + ' laps down'
+    }
+    var output = leaderboard_data.Passings[i].FirstName +
+                 ' ' + leaderboard_data.Passings[i].LastName +
+                 ' (' + leaderboard_data.Passings[i].CarNo + ') is running p' +
+                 leaderboard_data.Passings[i].RaceRank + ' at ' +
+                 leaderboard_data.Passings[i].LastLapSpeed + 'mph (' +
+                 leaderboard_data.Passings[i].LastLapTime + 'sec) in the ' +
+                 leaderboard_data.Passings[i].Sponsor + ' car. Currently ' +
+                 delta_message + '. ' + lapticker()
+    //var output = ''
+      say_and_log(to, output)  
+    }
     }
     //say_and_log(to, responses.top10);
   }
@@ -345,90 +349,90 @@ function makeNumericCmpRev(property) {
 // This method parses the leaderboard JSON, and creates some indexes for us
 function update_leaderboard() {
   console.log('update_leaderboard begin');
-  var data, err;
-  
-  // We are currently just reading this from a file because races aren't actually life
-  //   24/7 and i haven't yet put the files where i can http GET them. 
-  fs.readFile(cfg.nascar.leaderboard_url, 'utf8', function (err, data) {
-    if (err) {
-      console.log('Error: ' + err);
-      return;
-    }
-
-    // Store the JSON in the leaderboard_data array
-    leaderboard_data = JSON.parse(data);
-    
-    
-    if("length" in leaderboard_data) { console.log('update_leaderboard - bailing, no leaderboard'); return;}
-
-    // Re-initialize the leaderboard_points index
-    leaderboard_points = []
-    // Loop through leaderboard_data.Passings and note the car number, points,
-    //   points position and leaderbaord_data.Passings index
-    for(var i=0;i<leaderboard_data.Passings.length;i++) {
-      leaderboard_points[i] = {'CarNo' : leaderboard_data.Passings[i].CarNo,
-                               'Points' : leaderboard_data.Passings[i].Points,
-                               'PointsPosition' : leaderboard_data.Passings[i].PointsPosition,
-                               'index' : i};
-    }
-    // Sort the _points array by the PointsPosition property in order of
-    //   1, 2, 3, ..., N
-    leaderboard_points.sort(makeNumericCmp('PointsPosition'));
-
-
-
-    // Re-initialize the leaderboard_running index
-    leaderboard_running = []
-    // Loop through leaderboard_data.Passings and note the car number, race rank/position,
-    //  and leaderbaord_data.Passings index
-    for(var i=0;i<leaderboard_data.Passings.length;i++) {
-      leaderboard_running[i] = {'CarNo' : leaderboard_data.Passings[i].CarNo,
-                                'RaceRank' : leaderboard_data.Passings[i].RaceRank,
-                                'index' : i};
-    }
-    // Sort the _running array by the RaceRank (running order) property in order of
-    //   1, 2, 3, ..., N
-    leaderboard_running.sort(makeNumericCmp('RaceRank'));
  
+  // Request the leaderboard from configured URL
+  request(cfg.nascar.leaderboard_url, function (error, response, body) {
+    if (!error && response.statusCode == 200) {
+      // Proceed only if we don't detect an error, *and* status i good 
+    
 
-    // Loop through the array of cars and note the first one with an SFDelta = -1
-    //   this is the first car NOT on the lead lap, and will be the car eligible
-    //   for the Lucky Dog Pass
-    // TODO: This should leverage the sorted _running array, not just assume that
-    //         Passings is in running order  
-    for(var i=0;i<leaderboard_running.length;i++) {
-      if(leaderboard_data.Passings[i].SFDelta == -1) {
-        leaderboard_luckydog = i;
-        break;
+      // Store the JSON in the leaderboard_data array
+      try {
+        leaderboard_data = JSON.parse(body);
+      } catch (err) {console.log('bad data:' + body);}
+
+      if("length" in leaderboard_data) { console.log('update_leaderboard - bailing, no leaderboard'); return;}
+
+      // Re-initialize the leaderboard_points index
+      leaderboard_points = []
+      // Loop through leaderboard_data.Passings and note the car number, points,
+      //   points position and leaderbaord_data.Passings index
+      for(var i=0;i<leaderboard_data.Passings.length;i++) {
+        leaderboard_points[i] = {'CarNo' : leaderboard_data.Passings[i].CarNo,
+        'Points' : leaderboard_data.Passings[i].Points,
+        'PointsPosition' : leaderboard_data.Passings[i].PointsPosition,
+        'index' : i};
       }
-    }
+      // Sort the _points array by the PointsPosition property in order of
+      //   1, 2, 3, ..., N
+      leaderboard_points.sort(makeNumericCmp('PointsPosition'));
 
 
 
-    // Capturing each car's speed as of their last completed lap
-    //   putting it in _speed_last index, ordered by fastest
-    leaderboard_speed_last = []
-    for(var i=0;i<leaderboard_data.Passings.length;i++) {
-      leaderboard_speed_last[i] = {'CarNo' : leaderboard_data.Passings[i].CarNo, 'LastLapSpeed' : leaderboard_data.Passings[i].LastLapSpeed, 'index' : i};
-    }
-    leaderboard_speed_last.sort(makeNumericCmpRev('LastLapSpeed'));
+      // Re-initialize the leaderboard_running index
+      leaderboard_running = []
+      // Loop through leaderboard_data.Passings and note the car number, race rank/position,
+      //  and leaderbaord_data.Passings index
+      for(var i=0;i<leaderboard_data.Passings.length;i++) {
+        leaderboard_running[i] = {'CarNo' : leaderboard_data.Passings[i].CarNo,
+        'RaceRank' : leaderboard_data.Passings[i].RaceRank,
+        'index' : i};
+      }
+      // Sort the _running array by the RaceRank (running order) property in order of
+      //   1, 2, 3, ..., N
+      leaderboard_running.sort(makeNumericCmp('RaceRank'));
 
 
-    // Capturing each car's speed as of their BEST completed lap
-    //   putting it in _speed_best index, ordered by fastest
-    leaderboard_speed_best = []
-    for(var i=0;i<leaderboard_data.Passings.length;i++) {
-      leaderboard_speed_best[i] = {'CarNo' : leaderboard_data.Passings[i].CarNo, 'BestSpeed' : leaderboard_data.Passings[i].BestSpeed, 'index' : i};
-    }
-    leaderboard_speed_best.sort(makeNumericCmpRev('BestSpeed'));
-    // Print data for testing by uncommenting below
-    // console.dir(data);
+      // Loop through the array of cars and note the first one with an SFDelta = -1
+      //   this is the first car NOT on the lead lap, and will be the car eligible
+      //   for the Lucky Dog Pass
+      // TODO: This should leverage the sorted _running array, not just assume that
+      //         Passings is in running order  
+      for(var i=0;i<leaderboard_running.length;i++) {
+        if(leaderboard_data.Passings[i].SFDelta == -1) {
+          leaderboard_luckydog = i;
+          break;
+        }
+      }
 
-    // TODO: When this is extracted to nascar-lib there should be a property
-    //  to allow you to define a callback after each leaderboard refresh
-    //  or an 'event', as it were
-    //callback();
-  });
+
+
+      // Capturing each car's speed as of their last completed lap
+      //   putting it in _speed_last index, ordered by fastest
+      leaderboard_speed_last = []
+      for(var i=0;i<leaderboard_data.Passings.length;i++) {
+        leaderboard_speed_last[i] = {'CarNo' : leaderboard_data.Passings[i].CarNo, 'LastLapSpeed' : leaderboard_data.Passings[i].LastLapSpeed, 'index' : i};
+      }
+      leaderboard_speed_last.sort(makeNumericCmpRev('LastLapSpeed'));
+
+
+      // Capturing each car's speed as of their BEST completed lap
+      //   putting it in _speed_best index, ordered by fastest
+      leaderboard_speed_best = []
+      for(var i=0;i<leaderboard_data.Passings.length;i++) {
+        leaderboard_speed_best[i] = {'CarNo' : leaderboard_data.Passings[i].CarNo, 'BestSpeed' : leaderboard_data.Passings[i].BestSpeed, 'index' : i};
+      }
+      leaderboard_speed_best.sort(makeNumericCmpRev('BestSpeed'));
+      // Print data for testing by uncommenting below
+      // console.dir(data);
+
+      // TODO: When this is extracted to nascar-lib there should be a property
+      //  to allow you to define a callback after each leaderboard refresh
+      //  or an 'event', as it were
+      //callback();
+    }  
+
+});
 
   
  
