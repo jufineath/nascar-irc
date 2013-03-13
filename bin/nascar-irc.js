@@ -142,13 +142,13 @@ var command_handlers = {
   },
 
   leader: function(from,to,message) {  
-  var driver = leaderboard.leaderboard_data.Passings[leaderboard.leaderboard_running[0].index].Driver.DriverName;
+  var driver = leaderboard.rawData.Passings[leaderboard.runOrderIndex[0].index].Driver.DriverName;
     var output = driver + ' is leading the race. ' + leaderboard.lapticker();
     say_and_log(to, output) ;
   },
   
   luckydog: function(from,to,message) {  
-  var driver = leaderboard.leaderboard_data.Passings[leaderboard.leaderboard_luckydog].Driver.DriverName
+  var driver = leaderboard.rawData.Passings[leaderboard.luckyDogDriver].Driver.DriverName
   var output = driver + ' is sitting in the lucky dog position. ' + leaderboard.lapticker()
     say_and_log(to, output)
   },
@@ -175,10 +175,10 @@ var command_handlers = {
 
   p: function(from,to,message) {
     var target = message.substring(1, message.length).split(' ')[1];
-    for(var i =0;i<leaderboard.leaderboard_data.Passings.length;i++){
-    if(leaderboard.leaderboard_data.Passings[i].Driver.DriverName.toLowerCase().indexOf(target.toLowerCase()) !== -1) {
-    var leader_delta = leaderboard.leaderboard_data.Passings[i].SFDelta, delta_message = '';
-    if(leaderboard.leaderboard_data.Passings[i].SFDelta == 0) {
+    for(var i =0;i<leaderboard.rawData.Passings.length;i++){
+    if(leaderboard.rawData.Passings[i].Driver.DriverName.toLowerCase().indexOf(target.toLowerCase()) !== -1) {
+    var leader_delta = leaderboard.rawData.Passings[i].SFDelta, delta_message = '';
+    if(leaderboard.rawData.Passings[i].SFDelta == 0) {
       delta_message = 'in the lead';
     }
     else if(leader_delta > 0) {
@@ -187,13 +187,13 @@ var command_handlers = {
     else {
       delta_message = (0 - leader_delta) + ' laps down'
     }
-    var output = leaderboard.leaderboard_data.Passings[i].FirstName +
-                 ' ' + leaderboard.leaderboard_data.Passings[i].LastName +
-                 ' (' + leaderboard.leaderboard_data.Passings[i].CarNo + ') is running p' +
-                 leaderboard.leaderboard_data.Passings[i].RaceRank + ' at ' +
-                 leaderboard.leaderboard_data.Passings[i].LastLapSpeed + 'mph (' +
-                 leaderboard.leaderboard_data.Passings[i].LastLapTime + 'sec) in the ' +
-                 leaderboard.leaderboard_data.Passings[i].Sponsor + ' car. Currently ' +
+    var output = leaderboard.rawData.Passings[i].FirstName +
+                 ' ' + leaderboard.rawData.Passings[i].LastName +
+                 ' (' + leaderboard.rawData.Passings[i].CarNo + ') is running p' +
+                 leaderboard.rawData.Passings[i].RaceRank + ' at ' +
+                 leaderboard.rawData.Passings[i].LastLapSpeed + 'mph (' +
+                 leaderboard.rawData.Passings[i].LastLapTime + 'sec) in the ' +
+                 leaderboard.rawData.Passings[i].Sponsor + ' car. Currently ' +
                  delta_message + '. ' + leaderboard.lapticker()
     //var output = ''
       say_and_log(to, output)  
@@ -206,9 +206,9 @@ var command_handlers = {
 
 
 function parse_command(from, to, message) {
-  /*if(!"length" in leaderboard_data){ console.log("Die, no leadboard."); return;}
+  /*if(!"length" in rawData){ console.log("Die, no leadboard."); return;}
   
-  if(leaderboard_data.length <= 0) {
+  if(rawData.length <= 0) {
     say_and_log(to, 'No leaderboard data available.');
     return;
   }
@@ -242,14 +242,14 @@ function update_responses() {
   //console.log('reponses updated'); console.log(leaderboard.lapticker());return;
   var order = '', sep='', largest = 10;
 
-  // Used to check if leaderbaord.leaderboard_points has data, so we know something worked
-  //console.dir(leaderboard.leaderboard_points);
+  // Used to check if leaderbaord.pointsOrderIndex has data, so we know something worked
+  //console.dir(leaderboard.pointsOrderIndex);
 
   // First we will note the running order
-  console.log('Passings: ' + leaderboard.leaderboard_running.length);
-  for(var i = 0;i < leaderboard.leaderboard_running.length;i++) {
-    //console.log('P' + i + ' : ' + leaderboard_data.Passings[i].CarNo);
-    order = order + sep + leaderboard.leaderboard_data.Passings[leaderboard.leaderboard_running[i].index].CarNo;
+  console.log('Passings: ' + leaderboard.runOrderIndex.length);
+  for(var i = 0;i < leaderboard.runOrderIndex.length;i++) {
+    //console.log('P' + i + ' : ' + rawData.Passings[i].CarNo);
+    order = order + sep + leaderboard.rawData.Passings[leaderboard.runOrderIndex[i].index].CarNo;
     sep = ', ';
   }
   responses.running = 'Currently running ' + leaderboard.lapticker() + ': ' + order;
@@ -257,16 +257,16 @@ function update_responses() {
   //Next we will note the top 12 by points
   order = ''; sep='';
   largest = 12;
-  if(leaderboard.leaderboard_points.length < largest) {largest=leaderboard.leaderboard_points.length;}
+  if(leaderboard.pointsOrderIndex.length < largest) {largest=leaderboard.pointsOrderIndex.length;}
   for(var i = 0;i < largest;i++) {
-    order = order + sep + leaderboard.leaderboard_data.Passings[leaderboard.leaderboard_points[i].index].LastName;
+    order = order + sep + leaderboard.rawData.Passings[leaderboard.pointsOrderIndex[i].index].LastName;
     if(i==0) {
       //If this is the first driver, then show their total points
-      order=order + ' ' + leaderboard.leaderboard_data.Passings[leaderboard.leaderboard_points[i].index].Points;
+      order=order + ' ' + leaderboard.rawData.Passings[leaderboard.pointsOrderIndex[i].index].Points;
     }
     else {
       //If this is not the first driver, then show their point delta from leader
-      var delta = leaderboard.leaderboard_data.Passings[leaderboard.leaderboard_points[i].index].DeltaLeader
+      var delta = leaderboard.rawData.Passings[leaderboard.pointsOrderIndex[i].index].DeltaLeader
       if(delta>0) {delta = 0-delta;}
       order=order + ' ' + (delta);
     }
@@ -278,10 +278,10 @@ function update_responses() {
   // Next we will note the 12 fastest cars, based on their most recently completed lap
   order = ''; sep='';
   largest = 12;
-  if(leaderboard.leaderboard_speed_last.length < largest) {largest=leaderboard.leaderboard_speed_last.length;}
+  if(leaderboard.lastLapSpeedIndex.length < largest) {largest=leaderboard.lastLapSpeedIndex.length;}
   for(var i = 0;i < largest;i++) {
-    order = order + sep + leaderboard.leaderboard_data.Passings[leaderboard.leaderboard_speed_last[i].index].LastName +
-         ' ' + (leaderboard.leaderboard_data.Passings[leaderboard.leaderboard_speed_last[i].index].LastLapSpeed) + 'mph';
+    order = order + sep + leaderboard.rawData.Passings[leaderboard.lastLapSpeedIndex[i].index].LastName +
+         ' ' + (leaderboard.rawData.Passings[leaderboard.lastLapSpeedIndex[i].index].LastLapSpeed) + 'mph';
     sep = ', ';
   }
   responses.fastest_last = 'Fastest ' + leaderboard.lapticker() + ': ' + order;
@@ -290,10 +290,10 @@ function update_responses() {
   // Next we will note the 12 fastest cars, based on their fastest completed lap
   order = ''; sep='';
   largest = 12;
-  if(leaderboard.leaderboard_speed_best.length < largest) {largest=leaderboard.leaderboard_speed_best.length;}
+  if(leaderboard.bestLapSpeedIndex.length < largest) {largest=leaderboard.bestLapSpeedIndex.length;}
   for(var i = 0;i < largest;i++) {
-    order = order + sep + leaderboard.leaderboard_data.Passings[leaderboard.leaderboard_speed_best[i].index].LastName +
-          ' ' + (leaderboard.leaderboard_data.Passings[leaderboard.leaderboard_speed_best[i].index].BestSpeed) + 'mph';
+    order = order + sep + leaderboard.rawData.Passings[leaderboard.bestLapSpeedIndex[i].index].LastName +
+          ' ' + (leaderboard.rawData.Passings[leaderboard.bestLapSpeedIndex[i].index].BestSpeed) + 'mph';
     sep = ', ';
   }
   responses.fastest_best = 'Fastest Today ' + leaderboard.lapticker() + ': ' + order;
@@ -302,11 +302,11 @@ function update_responses() {
   // P2-P10 will show delta behind leader
   order = ''; sep='';
   largest = 10;
-  if(leaderboard.leaderboard_running.length < largest) {largest=leaderboard.leaderboard_running.length;}
+  if(leaderboard.runOrderIndex.length < largest) {largest=leaderboard.runOrderIndex.length;}
   for(var i = 0;i < largest;i++) {
-    order = order + sep + leaderboard.leaderboard_data.Passings[leaderboard.leaderboard_running[i].index].LastName;
+    order = order + sep + leaderboard.rawData.Passings[leaderboard.runOrderIndex[i].index].LastName;
     if(i>0) {
-      var delta = leaderboard.leaderboard_data.Passings[leaderboard.leaderboard_running[i].index].SFDelta
+      var delta = leaderboard.rawData.Passings[leaderboard.runOrderIndex[i].index].SFDelta
       if(delta>0) {delta = 0-delta;}
       order=order + ' ' + (delta);
     }
