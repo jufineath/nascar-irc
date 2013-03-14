@@ -214,10 +214,17 @@ function parseCommand(from, to, message) {
 
 }
 
-
+// Says a message to all channels current joined
+function broadcast(message) {
+  for ( var channame in bot.chans ) {
+    bot.say(channame, message);
+  }
+  console.log('broadcast:' + message);
+}
+// Says a message to one receipient (either nick or #chan)
 function sayAndLog(to, message) {
   bot.say(to, message);
-  console.log(to, message);
+  console.log(to + ' : ' + message);
 }
 
 
