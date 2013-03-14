@@ -10,6 +10,7 @@ lib-cov
 pids
 logs
 results
+racecache
 
 npm-debug.log
 
