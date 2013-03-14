@@ -209,7 +209,6 @@ function parseCommand(from, to, message) {
     commandHandlers[message.substring(1, message.length).split(' ')[0]](from, to, message);
   } catch (err) {
     console.log('bad command: ' + message);
-    throw err;
   }
 
 
