@@ -10,7 +10,7 @@
                        ]
          }
 , "nascar": {  "leaderboard_url": "http://www.nascar.com/"
-             , "labbylap_url": "http://www.nascar.com/"
+             , "lapbylap_url": "http://www.nascar.com/"
              , "query_interval": 15000
              }
 }
