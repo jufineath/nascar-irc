@@ -39,7 +39,7 @@ leaderboard.addListener('updated_board', updateResponses);
 //Our help message
 var HELP_TEXT = 'Looking for help? Try these commands:' +
                 ' !leader, !running, !top10, !luckydog, !p Johnson,' + 
-                ' !fastlast, !fastbest, !points';
+                ' !p 48, !fastlast, !fastbest, !points';
 
 // Error handling domain for the botd runner
 var domain = require('domain');
