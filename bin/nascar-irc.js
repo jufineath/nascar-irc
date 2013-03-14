@@ -367,7 +367,9 @@ var fs = require('fs');
 
 // Capture SIGHUP and re-read the config
 // Right now this will really only work for URL changes
+// and leaderboard changes
 process.on('SIGHUP', function sighupHandler() {
   console.log('Got SIGHUP, re-reading config');
-  cfg = JSON.parse(fs.readFileSync('../config/config.json'));
+  cfg = JSON.parse(fs.readFileSync('./config/config.json'));
+  leaderboard.updateInterval(cfg.nascar.query_interval)
 });
