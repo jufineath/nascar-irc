@@ -24,7 +24,7 @@ var DEBUG = 1;
 // require() in our config the first time, SIGHUP will force re-read also
 var cfg = require('../config/config');
 
-// require() NASCAR LeaderboardClient library
+// require() NASCAR LeaderboardClient
 var LeaderboardClient = require('nascar-stats-scraper').LeaderboardClient;
 
 // Let's get our leaderboard handle,
@@ -35,6 +35,21 @@ var leaderboard = new LeaderboardClient(cfg.nascar.leaderboard_url,
 // Now that our leaderboard is caching data,
 //   let's have it let us know, so we can update our responses.
 leaderboard.addListener('updated_board', updateResponses);
+
+
+// require() NASCAR LapByLapClient
+var LapByLapClient = require('nascar-stats-scraper').LapByLapClient;
+
+// Let's get our LapByLapClient handle,
+//   and go ahead and start caching data
+var lapByLap = new LapByLapClient(cfg.nascar.lapbylap_url,
+                                  cfg.nascar.query_interval);
+
+// Now that our leaderboard is caching data,
+//   let's have it let us know, so we can update our responses.
+lapByLap.addListener('lapUpdate',
+                     function onLapUpdate(message) {
+                       broadcast(message); } );
 
 //Our help message
 var HELP_TEXT = 'Looking for help? Try these commands:' +
