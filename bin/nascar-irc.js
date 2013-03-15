@@ -52,7 +52,8 @@ var LapByLapClient = require('nascar-stats-scraper').LapByLapClient;
 // Let's get our LapByLapClient handle,
 //   and go ahead and start caching data
 var lapByLap = new LapByLapClient(cfg.nascar.lapbylap_url,
-                                  cfg.nascar.query_interval);
+                                  cfg.nascar.query_interval,
+                                  cfg.nascar.racecachePath);
 
 // Now that our leaderboard is caching data,
 //   let's have it let us know, so we can update our responses.
