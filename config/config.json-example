@@ -12,6 +12,7 @@
 , "nascar": {  "leaderboard_url": "http://www.nascar.com/"
              , "lapbylap_url": "http://www.nascar.com/"
              , "query_interval": 15000
+             , "raceCachePath": "/home/bot/racecache/"
              }
 }
 
