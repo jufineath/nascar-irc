@@ -35,7 +35,16 @@ var leaderboard = new LeaderboardClient(cfg.nascar.leaderboard_url,
 // Now that our leaderboard is caching data,
 //   let's have it let us know, so we can update our responses.
 leaderboard.addListener('updated_board', updateResponses);
-
+// Also lets catch any errors
+leaderboard.addListener('error', function(message) {
+  console.log('leaderboard.error: ' + message);
+});
+//And in debug let's catch info
+if(DEBUG){
+  leaderboard.addListener('info', function(message) {
+    console.log('leaderboard.info: ' + message);
+  });
+}
 
 // require() NASCAR LapByLapClient
 var LapByLapClient = require('nascar-stats-scraper').LapByLapClient;
@@ -50,6 +59,16 @@ var lapByLap = new LapByLapClient(cfg.nascar.lapbylap_url,
 lapByLap.addListener('lapUpdate',
                      function onLapUpdate(message) {
                        broadcast(message); } );
+// Also lets catch any errors
+lapByLap.addListener('error', function(message) {
+ console.log('lapByLap.error: '+ message);
+});
+//And in debug let's catch info
+if(DEBUG){
+  lapByLap.addListener('info', function(message) {
+   console.log('lapByLap.info: ' + message);
+  });
+}
 
 //Our help message
 var HELP_TEXT = 'Looking for help? Try these commands:' +
