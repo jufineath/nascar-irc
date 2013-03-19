@@ -73,8 +73,8 @@ if(DEBUG){
 
 //Our help message
 var HELP_TEXT = 'Looking for help? Try these commands:' +
-                ' !leader, !running, !top10, !luckydog, !p Johnson,' + 
-                ' !p 48, !fastlast, !fastbest, !points';
+                ' !leader, !running, !top10, !luckydog, !d Johnson,' + 
+                ' !d 48, !fastlast, !fastbest, !points';
 
 // Error handling domain for the botd runner
 var domain = require('domain');
@@ -211,7 +211,7 @@ var commandHandlers = {
     sayAndLog(to, responses.top10);
   },
 
-  p: function(from, to, message) {
+  d: function(from, to, message) {
     // Grab the search target from the message
     // We only allow one search term
     var search = message.substring(1, message.length).split(' ')[1];
