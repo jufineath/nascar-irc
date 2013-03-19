@@ -73,7 +73,7 @@ if(DEBUG){
 
 //Our help message
 var HELP_TEXT = 'Looking for help? Try these commands:' +
-                ' !leader, !running, !top10, !luckydog, !d Johnson,' + 
+                ' !leader, !running, !top10, !luckydog, !d Johnson,' +
                 ' !d 48, !fastlast, !fastbest, !points';
 
 // Error handling domain for the botd runner
