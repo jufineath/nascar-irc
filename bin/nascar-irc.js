@@ -55,11 +55,12 @@ var lapByLap = new LapByLapClient(cfg.nascar.lapbylap_url,
                                   cfg.nascar.query_interval,
                                   cfg.nascar.racecachePath);
 
+var ent = require('ent');
 // Now that our leaderboard is caching data,
 //   let's have it let us know, so we can update our responses.
 lapByLap.addListener('lapUpdate',
                      function onLapUpdate(message) {
-                       broadcast(message); } );
+                       broadcast(ent.decode(message)); } );
 // Also lets catch any errors
 lapByLap.addListener('error', function(message) {
  console.log('lapByLap.error: '+ message);
