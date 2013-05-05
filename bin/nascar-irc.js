@@ -367,16 +367,7 @@ function updateResponses() {
 function driverStatusString(driverId) {
   //Get the driver's delta from the leader
   var leaderDelta = leaderboard.rawData.Passings[driverId].SFDelta;
-  
-  // Create an appropriate message based on driver's delta
-  var deltaMessage = '';  
-  if (leaderboard.rawData.Passings[driverId].SFDelta == 0) {
-    deltaMessage = 'in the lead';
-  } else if (leaderDelta > 0) {
-    deltaMessage = leaderDelta + " sec behind leader";
-  } else {
-    deltaMessage = (0 - leaderDelta) + ' laps down';
-  }
+
   
   // Capture the variables we need to display our output
   // TODO: This should be an API, we shouldn't be accessing rawData
@@ -386,7 +377,28 @@ function driverStatusString(driverId) {
   var lastLapSpeed = leaderboard.rawData.Passings[driverId].LastLapSpeed;
   var lastLapTime = leaderboard.rawData.Passings[driverId].LastLapTime;
   var sponsor = leaderboard.rawData.Passings[driverId].Sponsor;
+  var currentLap = leaderboard.rawData.CurrentLapNumber;
+
   
+  // Create an appropriate message based on driver's delta
+  var deltaMessage = '';  
+  if (leaderboard.rawData.Passings[driverId].SFDelta == 0) {
+    if (position == 1) {
+      deltaMessage = 'in the lead';    
+    }
+    else if(currentLap == 0) {
+      deltaMessage = 'waiting for the race to start';
+    }
+    else {
+      deltaMessage = 'i don\'t know';
+    }
+    
+  } else if (leaderDelta > 0) {
+    deltaMessage = leaderDelta + ' sec from leader';
+  } else {
+    deltaMessage = (0 - leaderDelta) + ' laps down';
+  }
+
   // Build our output string
   var output = driverName + ' (' + carNo + ') is running p' + position +
               ' at ' + lastLapSpeed + 'mph (' + lastLapTime + 'sec) in the ' +
