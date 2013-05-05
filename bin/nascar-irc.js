@@ -407,7 +407,7 @@ function driverStatusString(driverId) {
     deltaMessage = '-' + leaderDelta + ' sec from leader';
   } else {
     // If leaderDelta <0, we're laps back.
-    deltaMessage = leaderDelta + ' laps down';
+    deltaMessage = (0 - leaderDelta) + ' laps down';
   }
   if(isOnTrack == false){
     deltaMessage += ' (not on track)'
