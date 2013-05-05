@@ -177,6 +177,10 @@ var commandHandlers = {
     sayAndLog(to, responses.running);
   },
 
+  raceinfo: function(from, to, message) {
+    sayAndLog(to, responses.raceInfo);
+  },
+
   leader: function(from, to, message) {
     var index = leaderboard.runOrderIndex[0].index
     var driver = leaderboard.rawData.Passings[index].Driver.DriverName;
@@ -360,6 +364,24 @@ function updateResponses() {
     sep = ', ';
   }
   responses.top10 = 'Top10 ' + leaderboard.lapticker() + ': ' + order;
+
+
+  // Build a response with basic raceinfo
+  responses.raceInfo = leaderboard.rawData.RunName + ' at '
+                     + leaderboard.rawData.TrackName + ' ('
+                     + leaderboard.rawData.TrackLength + 'mi). '
+                     + leaderboard.rawData.LapsToGo + ' laps to go of '
+                     + leaderboard.rawData.LapsInRace + '. '
+  if (leaderboard.rawData.NumberOfCautionSegments > 0) {
+    responses.raceInfo += 'There have been ' + leaderboard.rawData.NumberOfCautionSegments
+                       + ' caution segments covering '
+                       + leaderboard.rawData.NumberOfCautions + ' laps. '
+  }
+  if (leaderboard.rawData.NumberOfLeadChanges > 1) {
+    responses.raceInfo += 'There have been ' + leaderboard.rawData.NumberOfLeadChanges
+    + ' lead changes between '
+    + leaderboard.rawData.NumberOfLeaders + ' leaders. '
+  }
 }
 
 
