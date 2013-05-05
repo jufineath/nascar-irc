@@ -11,6 +11,7 @@
          }
 , "nascar": {  "leaderboard_url": "http://www.nascar.com/"
              , "lapbylap_url": "http://www.nascar.com/"
+             , "driverDataURL": "http://www.nascar.com/"
              , "query_interval": 15000
              , "racecachePath": "/home/bot/racecache/"
              , "carMakeMap": {
