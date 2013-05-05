@@ -365,8 +365,6 @@ function updateResponses() {
 
 // Format driver's current status response
 function driverStatusString(driverId) {
-  //Get the driver's delta from the leader
-  var leaderDelta = leaderboard.rawData.Passings[driverId].SFDelta;
 
   
   // Capture the variables we need to display our output
@@ -377,7 +375,10 @@ function driverStatusString(driverId) {
   var lastLapSpeed = leaderboard.rawData.Passings[driverId].LastLapSpeed;
   var lastLapTime = leaderboard.rawData.Passings[driverId].LastLapTime;
   var sponsor = leaderboard.rawData.Passings[driverId].Sponsor;
+  var isOnTrack = leaderboard.rawData.Passings[driverId].is_on_track;
+  var leaderDelta = leaderboard.rawData.Passings[driverId].SFDelta;
   var carMake = leaderboard.rawData.Passings[driverId].CarMake;
+  
   // Determine the long value of the car make, to show in post
   var carMakeLong = carMake;
   for (var key in cfg.nascar.carMakeMap){
@@ -388,10 +389,10 @@ function driverStatusString(driverId) {
   }
   var currentLap = leaderboard.rawData.CurrentLapNumber;
 
-  
   // Create an appropriate message based on driver's delta
-  var deltaMessage = '';  
-  if (leaderboard.rawData.Passings[driverId].SFDelta == 0) {
+  var deltaMessage = '';
+  if (leaderDelta == 0) {
+  // If leaderDelta shows 0, they're in the lead or waiting.
     if (position == 1) {
       deltaMessage = 'in the lead';    
     }
@@ -401,13 +402,17 @@ function driverStatusString(driverId) {
     else {
       deltaMessage = 'i don\'t know';
     }
-    
   } else if (leaderDelta > 0) {
-    deltaMessage = leaderDelta + ' sec from leader';
+    // If leaderDelta shows >0, show seconds back.
+    deltaMessage = '-' + leaderDelta + ' sec from leader';
   } else {
-    deltaMessage = (0 - leaderDelta) + ' laps down';
+    // If leaderDelta <0, we're laps back.
+    deltaMessage = leaderDelta + ' laps down';
   }
-
+  if(isOnTrack == false){
+    deltaMessage += ' (not on track)'
+  }
+  
   // Build our output string
   var output = driverName + ' (' + carNo + ') is running p' + position +
               ' at ' + lastLapSpeed + 'mph (' + lastLapTime + 'sec) in the ' +
