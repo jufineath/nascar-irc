@@ -181,6 +181,10 @@ var commandHandlers = {
     sayAndLog(to, responses.raceInfo);
   },
 
+  raceweather: function(from, to, message) {
+    sayAndLog(to, responses.raceWeather);
+  },
+
   leader: function(from, to, message) {
     var index = leaderboard.runOrderIndex[0].index
     var driver = leaderboard.rawData.Passings[index].Driver.DriverName;
@@ -382,6 +386,13 @@ function updateResponses() {
     + ' lead changes between '
     + leaderboard.rawData.NumberOfLeaders + ' leaders. '
   }
+
+  // Build a response with basic raceinfo
+  responses.raceWeather = 'Current weather at '
+                     + leaderboard.rawData.TrackName + ': '
+                     + leaderboard.rawData.weatherInfo.weather + ' and '
+                     + leaderboard.rawData.weatherInfo.temp_f + ' degrees. ('
+                     + leaderboard.rawData.weatherInfo.ob_url + ').'
 }
 
 
