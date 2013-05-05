@@ -377,6 +377,15 @@ function driverStatusString(driverId) {
   var lastLapSpeed = leaderboard.rawData.Passings[driverId].LastLapSpeed;
   var lastLapTime = leaderboard.rawData.Passings[driverId].LastLapTime;
   var sponsor = leaderboard.rawData.Passings[driverId].Sponsor;
+  var carMake = leaderboard.rawData.Passings[driverId].CarMake;
+  // Determine the long value of the car make, to show in post
+  var carMakeLong = carMake;
+  for (var key in cfg.nascar.carMakeMap){
+    if (cfg.nascar.carMakeMap.hasOwnProperty(key)){
+        if (key == carMake)
+          carMakeLong = cfg.nascar.carMakeMap[key];
+      }
+  }
   var currentLap = leaderboard.rawData.CurrentLapNumber;
 
   
@@ -402,8 +411,8 @@ function driverStatusString(driverId) {
   // Build our output string
   var output = driverName + ' (' + carNo + ') is running p' + position +
               ' at ' + lastLapSpeed + 'mph (' + lastLapTime + 'sec) in the ' +
-              sponsor + ' car. Currently ' + deltaMessage + '. ' +
-              leaderboard.lapticker();
+              sponsor + ' ' + carMakeLong + '. Currently ' + 
+              deltaMessage + '. ' + leaderboard.lapticker();
               
   return output;
 }
