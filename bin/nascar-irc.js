@@ -72,10 +72,26 @@ if(DEBUG){
   });
 }
 
+// require() NASCAR DriverDataClient
+var DriverDataClient = require('nascar-stats-scraper').DriverDataClient;
+
+var driverData = new DriverDataClient(cfg.nascar.driverDataURL);
+driverData.updateDriverData();
+// Also lets catch any errors
+driverData.addListener('info', function(message) {
+ console.log('driverData.error: '+ message);
+});
+//And in debug let's catch info
+if(DEBUG){
+  driverData.addListener('info', function(message) {
+   console.log('driverData.info: ' + message);
+  });
+}
+
 //Our help message
 var HELP_TEXT = 'Looking for help? Try these commands:' +
                 ' !leader, !running, !top10, !luckydog, !d Johnson,' +
-                ' !d 48, !fastlast, !fastbest, !points';
+                ' !d 48, !fastlast, !fastbest, !points, !team';
 
 // Error handling domain for the botd runner
 var domain = require('domain');
@@ -232,6 +248,14 @@ var commandHandlers = {
       var output = driverStatusString(targetDriver);
       sayAndLog(to, output);
     }
+  },
+
+  team: function(from, to, message) {
+    // Grab the search target from the message
+    // We only allow one search term
+    var search = message.substring(1, message.length).split(' ')[1];
+
+    sayAndLog(to, buildTeamStringFromSearch(search));
   }
 
 } // End commandHandlers
@@ -369,7 +393,6 @@ function updateResponses() {
   }
   responses.top10 = 'Top10 ' + leaderboard.lapticker() + ': ' + order;
 
-
   // Build a response with basic raceinfo
   responses.raceInfo = leaderboard.rawData.RunName + ' at '
                      + leaderboard.rawData.TrackName + ' ('
@@ -403,6 +426,7 @@ function driverStatusString(driverId) {
   // Capture the variables we need to display our output
   // TODO: This should be an API, we shouldn't be accessing rawData
   var driverName = leaderboard.rawData.Passings[driverId].Driver.DriverName;
+  var driverHistID = leaderboard.rawData.Passings[driverId].Driver.HistoricalDriverID;
   var carNo = leaderboard.rawData.Passings[driverId].CarNo;
   var position = leaderboard.rawData.Passings[driverId].RaceRank;
   var lastLapSpeed = leaderboard.rawData.Passings[driverId].LastLapSpeed;
@@ -411,6 +435,7 @@ function driverStatusString(driverId) {
   var isOnTrack = leaderboard.rawData.Passings[driverId].is_on_track;
   var leaderDelta = leaderboard.rawData.Passings[driverId].SFDelta;
   var carMake = leaderboard.rawData.Passings[driverId].CarMake;
+  var team = driverData.rawData.info[driverHistID].team;
   
   // Determine the long value of the car make, to show in post
   var carMakeLong = carMake;
@@ -446,12 +471,63 @@ function driverStatusString(driverId) {
     deltaMessage += ' (not on track)'
   }
   
+  var teamString = '';
+  if(team) {
+    teamString = team + ' ';
+  }
+  
   // Build our output string
-  var output = driverName + ' (' + carNo + ') is running p' + position +
+  var output = driverName + ' (' + teamString + '#' + carNo + ') ' + 
+              'is running p' + position +
               ' at ' + lastLapSpeed + 'mph (' + lastLapTime + 'sec) in the ' +
               sponsor + ' ' + carMakeLong + '. Currently ' + 
               deltaMessage + '. ' + leaderboard.lapticker();
               
+  return output;
+}
+
+function buildTeamStringFromSearch(search) {
+
+  var teams = [];
+  teams = driverData.findTeams(search);
+
+  for (var tIndex = 0; tIndex < teams.length; tIndex++) {
+    var team = teams[tIndex];
+    
+    var drivers = [];
+    for (var dIndex = 0; dIndex < driverData.teamDrivers[team].length; dIndex++){
+      var driverID =  driverData.teamDrivers[team][dIndex].DriverID;
+      var driverIndex = leaderboard.findDriverIndexByID(driverID);
+      if(driverIndex) { drivers.push(driverIndex); }
+    }
+    if(drivers.length > 0) {
+      var teamString = buildTeamString(team, drivers)
+      return teamString;
+    }
+  }
+}
+
+function buildTeamString(team, drivers) {
+  
+  var output = team + ' ' + leaderboard.lapticker() + ': ';
+  var sep =''
+  
+  for (i=0; i < drivers.length; i++) {
+    var driverId = drivers[i];
+
+    // Capture the variables we need to display our output
+    // TODO: This should be an API, we shouldn't be accessing rawData
+    var driverName = leaderboard.rawData.Passings[driverId].Driver.DriverName;
+    var carNo = leaderboard.rawData.Passings[driverId].CarNo;
+    var position = leaderboard.rawData.Passings[driverId].RaceRank;
+
+    // Append driver to our output string
+    output = output + sep + driverName + ' (#' + carNo + ') ' + 
+    ' p' + position;
+    
+    sep = ", "
+  }
+  
   return output;
 }
 
