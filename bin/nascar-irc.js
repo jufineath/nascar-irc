@@ -498,7 +498,7 @@ function buildTeamStringFromSearch(search) {
     for (var dIndex = 0; dIndex < driverData.teamDrivers[team].length; dIndex++){
       var driverID =  driverData.teamDrivers[team][dIndex].DriverID;
       var driverIndex = leaderboard.findDriverIndexByID(driverID);
-      if(driverIndex) { drivers.push(driverIndex); }
+      if(!(typeof driverIndex === 'undefined')) { drivers.push(driverIndex); }
     }
     if(drivers.length > 0) {
       var teamString = buildTeamString(team, drivers)
