@@ -88,10 +88,14 @@ if(DEBUG){
   });
 }
 
+// auto-config now that ensure all our other clients are created.
+initializeUrlFinder(); 
+
+
 //Our help message
 var HELP_TEXT = 'Looking for help? Try these commands:' +
                 ' !leader, !running, !top10, !luckydog, !d Johnson,' +
-                ' !d 48, !fastlast, !fastbest, !points, !team';
+                ' !d 48, !fastlast, !fastbest, !points, !team Childress';
 
 // Error handling domain for the botd runner
 var domain = require('domain');
