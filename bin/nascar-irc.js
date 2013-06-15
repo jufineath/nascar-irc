@@ -126,7 +126,7 @@ botd.run(function() {
 botd.on('error', function(err) {
   // TODO: We can't say in a hardcoded channel, get ye to a config
   // sayAndLog('#bottestlab', "Error: " + err);
-  console.log("Error: " + err);
+  console.log("Error: " + err.stack + err.message);
   if(DEBUG == 1) {throw err;}
 });
 
