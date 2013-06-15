@@ -398,21 +398,35 @@ function updateResponses() {
   responses.top10 = 'Top10 ' + leaderboard.lapticker() + ': ' + order;
 
   // Build a response with basic raceinfo
-  responses.raceInfo = leaderboard.rawData.RunName + ' at '
+  var newRaceInfo = leaderboard.rawData.RunName + ' at '
                      + leaderboard.rawData.TrackName + ' ('
                      + leaderboard.rawData.TrackLength + 'mi). '
                      + leaderboard.rawData.LapsToGo + ' laps to go of '
                      + leaderboard.rawData.LapsInRace + '. '
   if (leaderboard.rawData.NumberOfCautionSegments > 0) {
-    responses.raceInfo += 'There have been ' + leaderboard.rawData.NumberOfCautionSegments
+    newRaceInfo += 'There have been ' + leaderboard.rawData.NumberOfCautionSegments
                        + ' caution segments covering '
                        + leaderboard.rawData.NumberOfCautions + ' laps. '
   }
   if (leaderboard.rawData.NumberOfLeadChanges > 1) {
-    responses.raceInfo += 'There have been ' + leaderboard.rawData.NumberOfLeadChanges
+    newRaceInfo += 'There have been ' + leaderboard.rawData.NumberOfLeadChanges
     + ' lead changes between '
     + leaderboard.rawData.NumberOfLeaders + ' leaders. '
   }
+  responses.raceInfo = newRaceInfo;
+  
+  var newRaceKey = leaderboard.rawData.RaceID
+                 + leaderboard.rawData.RunID
+                 + leaderboard.rawData.RunType
+                 + leaderboard.rawData.SeriesID
+                 + leaderboard.rawData.TrackID
+  
+  // If this is a new race, let's tell everyone what we're covering
+  if (responses.raceKey !== newRaceKey){
+    broadcast('Now covering: ' + newRaceInfo);
+    responses.raceKey = newRaceKey;
+  }  
+  
 
   // Build a response with basic raceinfo
   responses.raceWeather = 'Current weather at '
