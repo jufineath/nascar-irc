@@ -78,7 +78,7 @@ var DriverDataClient = require('nascar-stats-scraper').DriverDataClient;
 var driverData = new DriverDataClient(cfg.nascar.driverDataURL);
 driverData.updateDriverData();
 // Also lets catch any errors
-driverData.addListener('info', function(message) {
+driverData.addListener('error', function(message) {
  console.log('driverData.error: '+ message);
 });
 //And in debug let's catch info
